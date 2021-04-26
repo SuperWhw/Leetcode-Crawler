@@ -13,14 +13,6 @@ from selenium.common.exceptions import NoSuchElementException
 TIME_DELAY = 10
 logging.basicConfig(level=logging.INFO)
 
-driver_path = r"D:\Chrome Downloads\chromedriver.exe"
-chrome_options = Options()
-chrome_options.add_argument('--log-level=3')
-chrome_options.add_argument('--incognito')
-# chrome_options.add_argument('--headless')
-driver = webdriver.Chrome(driver_path,options=chrome_options)
-driver.implicitly_wait(TIME_DELAY)
-
 def login(driver, username, password):
     driver.get('https://leetcode.com/accounts/login/')
     driver.find_element_by_xpath('// *[ @ id = "id_login"]').send_keys(username)
@@ -29,7 +21,8 @@ def login(driver, username, password):
     time.sleep(10)
     logging.info('Login successful!')
 
-def get_submissions(driver, save=False, save_path='submission.csv'):
+
+def get_submissions(driver, args):
     driver.get('https://leetcode.com/submissions/')
     submissions = []
     header = []
@@ -41,6 +34,7 @@ def get_submissions(driver, save=False, save_path='submission.csv'):
             header.append(col.text)
     header += ['Link']
 
+    logging.info('Crawing submissions, please wait carefully...')
     while True:
         table = driver.find_element_by_xpath('//*[@id="submission-list-app"]/div/table')
         tbody = table.find_element_by_tag_name('tbody')
@@ -55,17 +49,17 @@ def get_submissions(driver, save=False, save_path='submission.csv'):
     submissions = pd.DataFrame(body, columns=header)
 
     logging.info('Problems done: {}'.format(submissions['Question'].nunique()))
-    logging.info('Submission counts: {}'.format(submissions['Question'].value_counts()))
+    logging.info('Submission counts: \n{}'.format(submissions['Question'].value_counts()))
     
-    if save:
-        submissions.to_csv(save_path,index=False)
+    submissions.to_csv(args.save_submissions_path, index=False)
     return submissions
 
-def get_contest(driver, contest_cate, contest_num):
+
+def get_contest(driver, contest_name):
     retry = 3
     while retry:
         try:
-            driver.get('https://leetcode.com/contest/' + contest_cate + '-' + str(contest_num))
+            driver.get('https://leetcode.com/contest/' + contest_name)
             time.sleep(3)
             questions_link = []
             table = driver.find_element_by_xpath('//*[@id="contest-app"]/div/div/div[4]/div[1]/ul')
@@ -74,15 +68,15 @@ def get_contest(driver, contest_cate, contest_num):
                 questions_link.append(q.find_element_by_tag_name('a').get_attribute('href'))
             break
         except:
-            logging.info('get contest failed, retrying...')
+            logging.info('Get contest failed, retrying...')
             retry -= 1
             driver.back()
     if retry == 0:
-        logging.info('get contest failed')
+        logging.info('Get contest failed')
         return []
     
     try:
-        logging.info('crawing questions...')
+        logging.info('Crawing questions...')
         contest_questions = []
         for i,ql in enumerate(questions_link):
             driver.get(ql)
@@ -100,7 +94,7 @@ def get_contest(driver, contest_cate, contest_num):
         return []
     
     logging.info('get total participants...')
-    ranking_url = f'https://leetcode.com/contest/{contest_cate}-{contest_num}/ranking/'
+    ranking_url = f'https://leetcode.com/contest/{contest_name}/ranking/'
     driver.get(ranking_url)
     time.sleep(5)
     max_page = 0
@@ -125,41 +119,53 @@ def get_contest(driver, contest_cate, contest_num):
     # contest_questions['Total Accepted Rate'] = contest_questions['Total Accepted'] / contest_questions['Total Submissions']
     # contest_questions['User Accepted Rate'] = contest_questions['User Accepted'] / max_par
 
-    contest_str = str(contest_num) if contest_cate=='weekly-contest' else 'b'+str(contest_num)
-    contest = [contest_str, max_par]
+    contest = [contest_name, max_par]
     for q in contest_questions:
         contest.append(q[1] / max_par)
     contest.append(np.mean(contest[2:]))
-    return contest
+    contest_df = pd.DataFrame(contest).transpose()
+    contest_df.columns = ['contest_num','total_participants','problem1','problem2','problem3','problem4','total_accepted']
+    # print(contest_df)
+    return contest_df
 
-def get_contests(start=200,end=0,save_path='contests_info.csv',bi_pass=False):
 
-    contests = []
-    for contest_num in range(start,end+1):
-        if contest_num % 2 and not bi_pass:
+def get_contests(driver, args):
+    contests = pd.DataFrame(columns=['contest_num','total_participants','problem1','problem2','problem3','problem4','total_accepted'])
+
+    if os.path.isfile(args.save_path):
+        contests = pd.read_csv(args.save_path)
+    
+    for contest_num in range(args.start, args.end+1):
+        if contest_num % 2:
             bn = contest_num // 2 - 68
-            logging.info(f'biweekly contest #{bn}')
-            contest = get_contest(driver,'biweekly-contest',bn)
-            if contest: contests.append(contest)
-            
-        logging.info(f'weekly contest #{contest_num}')
-        contest = get_contest(driver,'weekly-contest', contest_num)
-        if contest: contests.append(contest)
-    contests_df = pd.DataFrame(contests, columns=['contest_num','total_participants','problem1','problem2','problem3','problem4','total_accepted'])
-    
-    if os.path.isfile(save_path):
-        ori_df = pd.read_csv(save_path)
-        for i in range(len(contests_df)):
-            row = contests_df.iloc[i].to_list()
-            if row[0] in ori_df['contest_num'].values:
-                ori_df[ori_df['contest_num']==row[0]] = row
+            contest_name = 'biweekly-contest-'+str(bn)
+            if args.rewrite or contest_name not in contests['contest_num']:
+                logging.info(contest_name)
+                contest = get_contest(driver, contest_name)
+                if len(contest):
+                    if contest_name in contests['contest_num']:
+                        contests[contests['contest_num']==contest_name] = contest
+                    else:
+                        contests.append(contest)
+                        logging.info(len(contests))
             else:
-                ori_df.append(row)
-        contests_df = ori_df
-        del ori_df
+                logging.info(contest_name,' already exsits.')
+        
+        contest_name = 'weekly-contest-'+str(contest_num)
+        if args.rewrite or contest_name not in contests['contest_num']:
+            logging.info(contest_name)
+            contest = get_contest(driver, contest_name)
+            if len(contest):
+                if contest_name in contests['contest_num']:
+                    contests[contests['contest_num']==contest_name] = contest
+                else:
+                    contests.append(contest)
+        else:
+            logging.info(contest_name,' already exsits.')
     
-    contests_df.to_csv('contests_info.csv',index=False,header=True)
-    return contests_df
+    contests.to_csv(args.save_path,index=False,header=True)
+    return contests
+
 
 def post_info(url,csv_path='contests_info.csv',post=True):
     logging.info('loading csv file...')
