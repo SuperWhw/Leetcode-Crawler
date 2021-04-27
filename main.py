@@ -21,7 +21,7 @@ driver_path = os.path.join(dir_path, 'chromedriver.exe')
 chrome_options = Options()
 chrome_options.add_argument('--log-level=3')
 chrome_options.add_argument('--incognito')
-# chrome_options.add_argument('--headless')
+chrome_options.add_argument('--headless')
 driver = webdriver.Chrome(driver_path,options=chrome_options)
 driver.implicitly_wait(TIME_DELAY)
 
@@ -44,7 +44,7 @@ def parse_command_line():
                         type=str,
                         help='Path for saving submissions table.')
     
-    # get contests
+    # get contests table
     parser.add_argument('--build_table',
                         '-bt',
                         action='store_true',
@@ -61,13 +61,15 @@ def parse_command_line():
     parser.add_argument('--end',
                         type=int,
                         help='Build contests table to this number of weekly contest.')
-    parser.add_argument('--get_contest',
-                        '-gc',  # TODO
-                        help='Get single weekly or biweekly contest data: \nweekly contest 200 -> input 200; biweekly contest 50 ->input b50')
     parser.add_argument('--save_path',
                         default='data/contests_info.csv',
                         type=str,
                         help='Save file.')
+    
+    parser.add_argument('--post_url',
+                    default=None,
+                    type=str,
+                    help='Where to post the contest info.')
     
     args = parser.parse_args()
     return args
@@ -85,9 +87,8 @@ if __name__ == '__main__':
         assert args.end is not None, 'build_table needs argument \'--end\''
         get_contests(driver, args)
 
-        # contests_df = get_contests(end=228, save=True)
-        # contests_df = get_contests(contest_No, save=True)
-        # post_info(url=url)
+    if args.post_url is not None:
+        post_info(driver, args)
 
     driver.close()
 

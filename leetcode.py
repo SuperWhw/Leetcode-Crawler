@@ -125,7 +125,6 @@ def get_contest(driver, contest_name):
     contest.append(np.mean(contest[2:]))
     contest_df = pd.DataFrame(contest).transpose()
     contest_df.columns = ['contest_num','total_participants','problem1','problem2','problem3','problem4','total_accepted']
-    # print(contest_df)
     return contest_df
 
 
@@ -139,37 +138,36 @@ def get_contests(driver, args):
         if contest_num % 2:
             bn = contest_num // 2 - 68
             contest_name = 'biweekly-contest-'+str(bn)
-            if args.rewrite or contest_name not in contests['contest_num']:
+            if args.rewrite or contest_name not in contests['contest_num'].values:
                 logging.info(contest_name)
                 contest = get_contest(driver, contest_name)
                 if len(contest):
-                    if contest_name in contests['contest_num']:
+                    if contest_name in contests['contest_num'].values:
                         contests[contests['contest_num']==contest_name] = contest
                     else:
-                        contests.append(contest)
-                        logging.info(len(contests))
+                        contests = contests.append(contest)
             else:
-                logging.info(contest_name,' already exsits.')
+                logging.info('{} already exsits.'.format(contest_name))
         
         contest_name = 'weekly-contest-'+str(contest_num)
-        if args.rewrite or contest_name not in contests['contest_num']:
+        if args.rewrite or contest_name not in contests['contest_num'].values:
             logging.info(contest_name)
             contest = get_contest(driver, contest_name)
             if len(contest):
-                if contest_name in contests['contest_num']:
+                if contest_name in contests['contest_num'].values:
                     contests[contests['contest_num']==contest_name] = contest
                 else:
-                    contests.append(contest)
+                    contests = contests.append(contest)
         else:
-            logging.info(contest_name,' already exsits.')
+            logging.info('{} already exsits.'.format(contest_name))
     
     contests.to_csv(args.save_path,index=False,header=True)
     return contests
 
 
-def post_info(url,csv_path='contests_info.csv',post=True):
+def post_info(driver, args):
     logging.info('loading csv file...')
-    contests_df = pd.read_csv(csv_path)
+    contests_df = pd.read_csv(args.save_path)
 
     cur_contest = contests_df.iloc[-1,:]
     tot_par = cur_contest[1]
@@ -185,7 +183,7 @@ def post_info(url,csv_path='contests_info.csv',post=True):
     #     difficulty = 'easier than'
 
     logging.info('generating contest msg...')
-    driver.get(url)
+    driver.get(args.post_url)
     time.sleep(5)
     msg = f"There are **{int(tot_par)}** participants.\n" + \
         "|  Problem Num | Ac Rate | Avg Ac Rate* |\n" + \
@@ -198,12 +196,12 @@ def post_info(url,csv_path='contests_info.csv',post=True):
         "> \\* Count from Weekly-Contest 200\n" + \
         "> For more details, please see https://1drv.ms/x/s!AmUyLy2gP9TnpTZpPGxr7iAHAU9a?e=bngZEt. (System may have delay, please refer to the actual situation)"
     print(msg)
-    if post:
-        logging.info('posting msg to discussion...')
-        driver.find_element_by_xpath('//*[@id="discuss-container"]/div/div/div/div[2]/div[2]/div[2]/div[1]/div/div[1]/textarea').send_keys(msg)
-        time.sleep(3)
-        driver.find_element_by_xpath('//*[@id="discuss-container"]/div/div/div/div[2]/div[2]/div[2]/div[1]/div/div[2]/button').click()
-        logging.info('Successful posted!')
+    
+    logging.info('Posting msg to discussion...')
+    driver.find_element_by_xpath('//*[@id="discuss-container"]/div/div/div/div[2]/div[2]/div[2]/div[1]/div/div[1]/textarea').send_keys(msg)
+    time.sleep(3)
+    driver.find_element_by_xpath('//*[@id="discuss-container"]/div/div/div/div[2]/div[2]/div[2]/div[1]/div/div[2]/button').click()
+    logging.info('Successful posted!')
 
 if __name__ == '__main__':
     login(username='', password='')
