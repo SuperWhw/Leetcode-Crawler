@@ -3,9 +3,10 @@
 
 ## Support functions
 
-- Crawl all your submissions to file
-- Build contests info table to file
-- Post useful information on leetcode discussion 
+- [x] Crawl all your submissions to file
+- [x] Build contests info table to file
+- [x] Post useful information on leetcode discussion
+- [ ] User contest history profile
 
 ## How to use
 
