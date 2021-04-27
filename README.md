@@ -1,11 +1,26 @@
 # Leetcode-Crawler
 
 
+## Sceenshot
+
+### Submission table
+
+![image](https://user-images.githubusercontent.com/37525190/116203267-17a71880-a76e-11eb-80e8-6a6eb3bd526b.png)
+
+### Contests info table
+
+![image](https://user-images.githubusercontent.com/37525190/116203508-58069680-a76e-11eb-8907-6df45eb0469a.png)
+
+### Generated contest summary
+
+![image](https://user-images.githubusercontent.com/37525190/116203728-956b2400-a76e-11eb-9496-516efdd406aa.png)
+
+
 ## Support functions
 
 - [x] Crawl all your submissions to file
 - [x] Build contests info table to file
-- [x] Post useful information on leetcode discussion
+- [x] Post contest summary on leetcode discussion
 - [ ] User contest history profile
 
 ## How to use
@@ -48,7 +63,7 @@ python main.py -bt \
 --save_path SAVE_PATH
 ```
 
-### 3. Post info on leetcode discussion
+### 3. Post contest summary on leetcode discussion
 
 For example, if you want to post weekly-contest-238, run:
 
