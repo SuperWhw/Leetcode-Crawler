@@ -66,6 +66,7 @@ def parse_command_line():
                         type=str,
                         help='Save file.')
     
+    # Post stat comment for a contest 
     parser.add_argument('--post_url',
                     default=None,
                     type=str,
