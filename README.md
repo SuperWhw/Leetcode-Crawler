@@ -1,27 +1,13 @@
 # Leetcode-Crawler
 
 
-## Sceenshot
-
-### Submission table
-
-![image](https://user-images.githubusercontent.com/37525190/116203267-17a71880-a76e-11eb-80e8-6a6eb3bd526b.png)
-
-### Contests info table
-
-![image](https://user-images.githubusercontent.com/37525190/116203508-58069680-a76e-11eb-8907-6df45eb0469a.png)
-
-### Generated contest summary
-
-![image](https://user-images.githubusercontent.com/37525190/116203728-956b2400-a76e-11eb-9496-516efdd406aa.png)
-
-
 ## Support functions
 
 - [x] Crawl all your submissions to file
 - [x] Build contests info table to file
 - [x] Post contest summary on leetcode discussion
 - [ ] User contest history profile
+
 
 ## How to use
 
@@ -70,3 +56,19 @@ For example, if you want to post weekly-contest-238, run:
 ```shell
 python main.py -u USERNAME -p PASSWORD --post_url https://leetcode.com/discuss/general-discussion/1175023/weekly-contest-238
 ```
+
+
+
+## Sceenshot
+
+### Submission table
+
+![image](https://user-images.githubusercontent.com/37525190/116203267-17a71880-a76e-11eb-80e8-6a6eb3bd526b.png)
+
+### Contests info table
+
+![image](https://user-images.githubusercontent.com/37525190/116203508-58069680-a76e-11eb-8907-6df45eb0469a.png)
+
+### Generated contest summary
+
+![image](https://user-images.githubusercontent.com/37525190/116203728-956b2400-a76e-11eb-9496-516efdd406aa.png)
